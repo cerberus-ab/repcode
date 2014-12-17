@@ -1,0 +1,77 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE HTML>
+<html lang="ru-RU" manifest="offline.manifest">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>Repcode: Исправление ошибок в ПКП</title>
+    <!--
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="img/favicon.png">
+    -->
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="style/default.css">
+    <link rel="stylesheet" type="text/css" href="style/index.css">
+</head>
+<body>
+    <DIV id="_main">
+        <div class="window" id="win_main">
+            <div class="window_head">
+                <p>Исправление ошибки в простейшем коде с повторением</p>
+            </div>
+            <div class="window_body">
+                <div class="window_body_part" id="params">
+                    <table class="table_form" id="form_params">
+                        <tr name="length">
+                            <td><p class="tf_name">Длина блока:</p></td>
+                            <td><input class="tf_value" type="text" tabindex="1" value="5" data-type="number" readonly><p class="tf_error"></p></td>
+                        </tr>
+                        <tr name="repeat">
+                            <td><p class="tf_name">Количество повторений:</p></td>
+                            <td><input class="tf_value" type="text" tabindex="2" value="3" data-type="number" readonly><p class="tf_error"></p></td>
+                        </tr>
+                        <tr name="block">
+                            <td><p class="tf_name">Информационный блок:</p></td>
+                            <td><input class="tf_value" type="text" tabindex="3" placeholder="binary" value=""
+                                data-pattern="^[01]{5}$"
+                                data-msgerror="5 бит информации"
+                                data-msgempty="не задан информ. блок"><p class="tf_error"></p></td>
+                        </tr>
+                        <tr name="error">
+                            <td><p class="tf_name">Кратность ошибки:</p></td>
+                            <td><select class="tf_value" tabindex="4" data-type="number">
+                                <option value="2">2х кратная</option>
+                                <option value="3">3х кратная</option>
+                                <option value="4">4х кратная</option>
+                                <option value="5">5и кратная</option>
+                            </select><p class="tf_error"></p></td>
+                        </tr>
+                    </table>
+                    <button id="but_submit" tabindex="10">Рассчитать</button>
+                </div>
+                <div class="window_body_part" id="result">
+                    <div id="statistic">
+                        <p>Всего вариантов: <span name="all"></span></p>
+                        <p>Исправленно: <span name="success"></span></p>
+                    </div>
+                    <div id="intable">
+                        <table id="options"></table>
+                    </div>
+                </div>
+                <div class="window_body_part" id="control">
+                    <table id="codeview"></table>
+                </div>
+            </div>
+        </div>
+    </DIV>
+    <div id="_about">
+        <h5>by cerberus.ab</h5>
+        <h5>last update: 11.12.2014</h5>
+        <a class="link" href="README" target="_blank">README</a>
+    </div>
+    <!-- Javascript Libs -->
+    <script type="text/javascript" src="lib/jquery-min.js"></script>
+    <!-- Javascript Code -->
+    <script type="text/javascript" src="prog/app.js"></script>
+</body>
+</html>
