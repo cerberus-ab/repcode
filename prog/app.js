@@ -98,6 +98,11 @@
         }
     })();
 
+    /**
+     * Конструктор функции рассчета коллекции
+     * @param  {object} options настройки
+     * @return {function} функция рессчета коллекции
+     */
     var RepeatCodeCollection = function(options) {
         function createOption(binstr, length, error) {
             return {
@@ -110,49 +115,80 @@
                 }(binstr, length, error)
             }
         }
+
         return function(attrs) {
             var codelen = attrs.length * attrs.repeat,
                 comb = getComb(attrs.error, codelen);
-
             var collection = [];
             for (var bin, i = comb.length -1; i > -1; i--) {
                 bin = comb[i].toString(2);
                 bin = new Array(15 - bin.length +1).join('0') + bin;
                 collection.push(createOption(bin, attrs.length, attrs.error));
             }
-
-            console.log(collection);
+            return collection;
         }
     }();
 
     /**
      * Класс представления кодовой комбинации
-     * @param {jQuery} $view   контейнер юнитов
-     * @param {object} options настройки инициализации
+     * @constructs
+     * @param  {jQuery} $view   контейнер юнитов
+     * @param  {object} options настройки инициализации
+     * @return {object} публичные методы
      */
     function RepeatCodeView($view, options) {
 
         options = $.extend(true, {
-            length: 5,
-            repeat: 3,
             item: 'td',
-            select_class: 'selected'
+            select_class: 'selected',
+            bit_class: 'bitvalue',
+            tab_class: 'bittab',
+            length: 5,
+            repeat: 3
         }, options);
 
+        var _length = options.length,
+            _repeat = options.repeat,
+            _$set = [];
+
+        function bitView(index, biter) {
+            return "<" + options.item + "><div class='" + options.tab_class + "'>"
+                + index + "</div><p class='" + options.bit_class + "'>"
+                + (biter ? '1' : '0') + "</" + options.item + ">";
+        }
+
+        function invItem($item) {
+            var $input = $item.find('.' + options.bit_class);
+            $input.text($input.text() == '0' ? '1' : '0');
+        }
+
+        function initCode(length, repeat) {
+            _length = typeof length !== "undefined" ? length : options.length;
+            _repeat = typeof repeat !== "undefined" ? repeat : options.repeat;
+            for (var bits = "", i = 0, j; i != _repeat; i++) {
+                for (j = 0; j != _length; j++) {
+                    bits += bitView(j +1);
+                }
+            }
+            $view.empty().append(bits);
+            _$set = $view.find(options.item);
+        }
+
         function setCode(code) {
-            for (var i=0, j; i!=options.repeat; i++) {
-                for (j=0; j!=options.length; j++) {
-                    $set.eq(i*options.length + j).text(code[j]);
+            for (var i=0, j; i!=_repeat; i++) {
+                for (j=0; j!=_length; j++) {
+                    _$set.eq(i * _length + j).find('.' + options.bit_class).text(code[j]);
                 }
             }
         }
 
-        var unit_default = '<' + options.item + '>0</' + options.item + '>';
-        $view.empty().append(new Array(options.length * options.repeat + 1).join(unit_default));
-        var $set = $view.find(options.item);
+        initCode();
 
         return {
             fn: {
+                init: function(length, repeat) {
+                    initCode(length, repeat);
+                },
                 set: function(code) {
                     setCode(code);
                 },
@@ -160,11 +196,20 @@
                     setCode(new Array(options.length +1).join('0'));
                 },
                 select: function(nums) {
-                    $set.find('.' + options.select_class).removeClass(options.select_class);
+                    _$set.each(function() {
+                        var $item = $(this);
+                        if ($item.hasClass(options.select_class)) {
+                            $item.removeClass(options.select_class);
+                            invItem($item);
+                        }
+                    });
+                    _$set.find('.' + options.select_class).removeClass(options.select_class);
                     if (arguments.length) {
                         if (!nums instanceof Array) nums = [nums];
                         nums.forEach(function(num){
-                            $set.eq(num).addClass(options.select_class);
+                            var $item = _$set.eq(num);
+                            $item.addClass(options.select_class);
+                            invItem($item);
                         });
                     }
                 }
@@ -172,36 +217,94 @@
         }
     }
 
+    /**
+     * Класс модели кода
+     * @constructs
+     * @param  {object} options настройки
+     * @return {object} публичные методы
+     */
+    var RepeatCode = function(options) {
 
-    function RepeatCode(block, attrs, options) {
         options = $.extend(true, {
-            $codeview: null,
-            $options: null,
+            $codeview: $("#codeview"),
+            $options: $("#options"),
+            maxview: 200,
+            item: 'tr',
+            calcAll: function(a) {
+                return getSample(a.error, a.length * a.repeat);
+            },
+            calcCorrect: function(a) {
+                return getSample(a.error, a.length) * Math.pow(a.repeat, a.error);
+            },
             showResult: function(result) {
                 $statistic = $("#statistic");
                 $statistic.find("span[name='all']").text(result.all);
-                $statistic.find("span[name='success']").text(result.success + ' [~' + (100*result.success/result.all).toFixed(2) + '%]');
+                $statistic.find("span[name='success']").text(result.success + ' [~' + (100 * result.success / result.all).toFixed(2) + '%]');
+            },
+            optView: function(option, index) {
+                return "<tr class='" + (option.correct ? "correct" : "") + "'><td>"
+                    + index + ".</td><td>[" + option.nums.map(function(n){
+                        return n+1;
+                }).join(', ') + "]</td></tr>";
             }
         }, options);
 
-        var codeview = RepeatCodeView(options.$codeview, {
-            length: attrs.length,
-            repeat: attrs.repeat
+        var _collection = [],
+            _block = null,
+            _attrs = null,
+            _result = null,
+            _$options = [];
+
+        var _codeview = RepeatCodeView(options.$codeview);
+
+        function repcodeResult(attrs) {
+            return {
+                all: options.calcAll(attrs),
+                success: options.calcCorrect(attrs)
+            }
+        }
+
+        function repcodeClear() {
+            _collection.length = 0;
+            _codeview.fn.init();
+        }
+
+        function repcodeCreate(block, attrs) {
+            _block = block;
+            _attrs = attrs;
+            _codeview.fn.init(_attrs.length, _attrs.repeat);
+            _codeview.fn.set(_block);
+            _result = repcodeResult(_attrs);
+            _collection = RepeatCodeCollection(_attrs);
+
+            for (var i = 0, opts = "", max = options.maxview && options.maxview < _collection.length ? options.maxview : _collection.length; i != max; i++) {
+                opts += options.optView(_collection[i], i+1);
+            }
+            options.$options.empty().append(opts);
+            _$options = options.$options.find(options.item);
+
+            if (typeof options.showResult === "function") {
+                options.showResult(_result);
+            }
+        }
+
+        options.$options.delegate(options.item, 'mouseenter', function(event) {
+            var index = _$options.index(this);
+            _codeview.fn.select(_collection[index].nums);
+        }).delegate(options.item, 'mouseleave', function(event) {
+            _codeview.fn.select();
         });
-        codeview.fn.set(block);
 
-        var collection = RepeatCodeCollection(attrs);
-
-        var result = {};
-        result.all = function(a) {
-            return getSample(a.error, a.length * a.repeat);
-        }(attrs);
-        result.success = function(a) {
-            return getSample(a.error, a.length) * Math.pow(a.repeat, a.error);
-        }(attrs);
-
-        if (typeof options.showResult === "function") {
-            options.showResult(result);
+        return {
+            fn: {
+                create: function(block, attrs) {
+                    repcodeClear();
+                    repcodeCreate(block, attrs);
+                },
+                clear: function() {
+                    repcodeClear();
+                }
+            }
         }
     }
 
@@ -221,6 +324,8 @@
 
     // После полной загрузки приложения ========================================
     $(window).load(function(){
+
+        var _repcode = RepeatCode();
 
         // Валидация поля и формы при редактировании значения
         $(".table_form").delegate(".tf_value", "keyup change", function(event) {
@@ -254,13 +359,10 @@
         // Действие при сабмите
         $("#but_submit").click(function(event){
             $params = $("#form_params");
-            RepeatCode(findFormValue($params, 'block'), {
+            _repcode.fn.create(findFormValue($params, 'block'), {
                 length: findFormValue($params, 'length'),
                 repeat: findFormValue($params, 'repeat'),
                 error: findFormValue($params, 'error')
-            }, {
-                $codeview: $("#codeview"),
-                $options: $("#options")
             });
         });
 
