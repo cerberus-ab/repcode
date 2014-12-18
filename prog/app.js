@@ -1,6 +1,21 @@
 ;(function(){
 
     /**
+     * Поиск всех вхождение в набор элементов
+     * @param  {array|string} cache набор элементов с определенным indexOf
+     * @param  {mixed} searchElement искомый элемент
+     * @return {array} массив индексов
+     */
+    function indexOfAll(cache, searchElement) {
+        var inxs = [], inx = cache.indexOf(searchElement);
+        while (inx != -1) {
+            inxs.push(inx);
+            inx = cache.indexOf(searchElement, inx +1);
+        }
+        return inxs;
+    }
+
+    /**
      * Проверка строки регулярным выражением
      * @param  [string] str - целевая строка
      * @param  [string] pattern - паттерн
@@ -83,21 +98,32 @@
         }
     })();
 
-
-    function RepeatCodeCollection(attrs) {
-        var codelen = attrs.length * attrs.repeat,
-            comb = getComb(attrs.error, codelen);
-
-        var collection = [];
-        for (var bin, i = comb.length -1; i > -1; i--) {
-            bin = comb[i].toString(2);
-            bin = new Array(15 - bin.length +1).join('0') + bin;
-            collection.push(bin);
+    var RepeatCodeCollection = function(options) {
+        function createOption(binstr, length, error) {
+            return {
+                bin: binstr,
+                nums: indexOfAll(binstr, '1'),
+                correct: function(b, l, e) {
+                    return b.match(new RegExp('.{' + l + '}', 'g')).reduce(function(prev, cur) {
+                        return prev | parseInt(cur, 2);
+                    }, 0).toString(2).replace(/0/g, '').length == e;
+                }(binstr, length, error)
+            }
         }
+        return function(attrs) {
+            var codelen = attrs.length * attrs.repeat,
+                comb = getComb(attrs.error, codelen);
 
-        console.log(collection);
-    }
+            var collection = [];
+            for (var bin, i = comb.length -1; i > -1; i--) {
+                bin = comb[i].toString(2);
+                bin = new Array(15 - bin.length +1).join('0') + bin;
+                collection.push(createOption(bin, attrs.length, attrs.error));
+            }
 
+            console.log(collection);
+        }
+    }();
 
     /**
      * Класс представления кодовой комбинации

@@ -120,6 +120,26 @@ button:disabled {
     vertical-align: top;
     width: 50%;
 }
+.tf_value {
+    font-family: monospace;
+}
+.tf_name {
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 28px;
+}
+.tf_error {
+    display: none;
+    font-size: 12px;
+    color: #B22222;
+}
+.table_form tr.error .tf_value {
+    border-color: #B22222;
+    color: #B22222;
+}
+.table_form tr.error .tf_error {
+    display: block;
+}
 
 #but_submit {
     float: right;
