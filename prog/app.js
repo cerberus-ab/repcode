@@ -1,10 +1,17 @@
+/**
+ * @name MainApplicationFile
+ * @author [author]
+ * @description [description]
+ * @version [version]
+ * @tutorial [link]
+ */
 ;(function(){
 
     /**
-     * Поиск всех вхождение в набор элементов
-     * @param  {array|string} cache набор элементов с определенным indexOf
-     * @param  {mixed} searchElement искомый элемент
-     * @return {array} массив индексов
+     * Поиск всех вхождений в набор элементов
+     * @param   {array|string} cache набор элементов с определенным indexOf
+     * @param   {mixed} searchElement искомый элемент
+     * @returns {array} массив индексов
      */
     function indexOfAll(cache, searchElement) {
         var inxs = [], inx = cache.indexOf(searchElement);
@@ -17,9 +24,9 @@
 
     /**
      * Проверка строки регулярным выражением
-     * @param  [string] str - целевая строка
-     * @param  [string] pattern - паттерн
-     * @return [boolean] true/false
+     * @param   {string} str целевая строка
+     * @param   {string} pattern паттерн
+     * @returns {boolean} true/false
      */
     function regTest(str, pattern) {
         return pattern ? new RegExp(pattern).test(str) : true;
@@ -27,40 +34,45 @@
 
     /**
      * Получить текущее время в мс
-     * @return [number] время в мс
+     * @returns {number} время в мс
      */
     function getTime() {
         return new Date().getTime();
     }
 
     /**
-     * Функция расчета факториала
-     * @param  [number] n - заданное число
-     * @return [number] результат
+     * Конструктор функции расчета факториала
+     * @lambda
+     * @returns {function} функция расчета факториала
      */
-    var getFactorial = (function(){
+    var getFactorial = function(){
         var cache = [1,1];
+        /**
+         * Функция расчета факториала
+         * @param  {number} n целое положительное
+         * @return {number} значение факториала
+         */
         return function(n){
             if (!cache[n]) cache[n] = n * getFactorial(n -1);
             return cache[n];
         };
-    })();
+    }();
 
     /**
-     * Функция расчета выборки
-     * @param  [number] k - знаменатель
-     * @param  [number] n - числитель
-     * @return [number] результат выборки
+     * Функция подсчета количества сочетаний без повторений
+     * @param   {number} k числитель
+     * @param   {number} n знаменатель
+     * @returns {number} количество сочетаний
      */
     function getSample(k, n) {
         return n >= k ? getFactorial(n) / (getFactorial(k) * getFactorial(n -k)) : 0;
     }
 
     /**
-     * Получить все варинты сочетания
-     * @param  {integer} k числитель выборки
-     * @param  {integer} n знаменатель выборки
-     * @return {array} массив вариантов в целых числах
+     * Получить все варинты сочетания без повторений
+     * @param   {number} k числитель
+     * @param   {number} n знаменатель
+     * @returns {Array} массив вариантов в целых числах
      */
     function getComb(k, n) {
         for (var comb = [], cur = (1 << k) -1, tmp; cur < (1 << n); ) {
@@ -71,9 +83,11 @@
     }
 
     /**
-     * Контроллер валидации форм (конструктор)
+     * Конструктор контроллера валидации форм
+     * @lambda
+     * @returns {function} функция валидации формы
      */
-    var formsValidController = (function(){
+    var formsValidController = function(){
         // функции валидации
         var cbs = {
             // форма параметров испытания
@@ -83,31 +97,46 @@
                 return isvalid;
             }
         }
-        // функция валидации по умолчанию
+        /**
+         * Функция валидации формы по умолчанию
+         * @returns {boolean} true/false
+         */
         function cb_default() {
             return !this.find("tr.error").length;
         }
         /**
-         * Валидация формы
-         * @param  [jquery] $form - целевая форма
-         * @return [boolean] true/false
+         * Вызов функции валидации формы
+         * @param   {jQuery} $form целевая форма
+         * @returns {boolean} true/false
          */
         return function($form) {
             var id = $form.attr("id");
             return cbs[id] ? cbs[id].call($form) : cb_default.call($form);
         }
-    })();
+    }();
 
     /**
      * Конструктор функции рассчета коллекции
-     * @param  {object} options настройки
-     * @return {function} функция рессчета коллекции
+     * @lamda
+     * @param   {object} options настройки
+     * @returns {function} функция рессчета коллекции
      */
     var RepeatCodeCollection = function(options) {
+        /**
+         * Конструктор элемента коллекции
+         * @constructs
+         * @param   {string} binstr бинарный блок
+         * @param   {number} length длина блока
+         * @param   {error} error кратность ошибки
+         * @returns {object} элемент коллекции
+         */
         function createOption(binstr, length, error) {
             return {
+                /** @type {string} бинарный блок */
                 bin: binstr,
+                /** @type {Array} массив индексов */
                 nums: indexOfAll(binstr, '1'),
+                /** @type {boolean} корректный ли элемент */
                 correct: function(b, l, e) {
                     return b.match(new RegExp('.{' + l + '}', 'g')).reduce(function(prev, cur) {
                         return prev | parseInt(cur, 2);
@@ -115,7 +144,11 @@
                 }(binstr, length, error)
             }
         }
-
+        /**
+         * Функция формирования коллекции
+         * @param   {object} attrs атрибуты
+         * @returns {Array} массив элементов коллекции
+         */
         return function(attrs) {
             var codelen = attrs.length * attrs.repeat,
                 comb = getComb(attrs.error, codelen);
@@ -131,37 +164,60 @@
 
     /**
      * Класс представления кодовой комбинации
-     * @constructs
-     * @param  {jQuery} $view   контейнер юнитов
-     * @param  {object} options настройки инициализации
-     * @return {object} публичные методы
+     * @class
+     * @param   {jQuery} $view контейнер юнитов
+     * @param   {object} options настройки инициализации
+     * @returns {object} публичные методы
      */
     function RepeatCodeView($view, options) {
-
+        // настройки конструктора
         options = $.extend(true, {
+            /** @type {string} единичный элемент представления */
             item: 'td',
+            /** @type {string} класс выбранного юнита */
             select_class: 'selected',
+            /** @type {string} класс элемента значения юнита */
             bit_class: 'bitvalue',
+            /** @type {string} класс элемента индекса юнита */
             tab_class: 'bittab',
+            /** @type {number} длина блока по умолчанию */
             length: 5,
+            /** @type {number} количество повторений по умолчанию */
             repeat: 3
         }, options);
 
+        /** @access private */
         var _length = options.length,
             _repeat = options.repeat,
             _$set = [];
 
+        /**
+         * Функция формирования представления юнита
+         * @param   {number} index индекс юнита
+         * @param   {boolean} biter вкл/выкл юнита
+         * @returns {string} html-текст представления
+         */
         function bitView(index, biter) {
             return "<" + options.item + "><div class='" + options.tab_class + "'>"
                 + index + "</div><p class='" + options.bit_class + "'>"
                 + (biter ? '1' : '0') + "</" + options.item + ">";
         }
 
+        /**
+         * Инверсия юнита
+         * @param {jQuery} $item целевой юнит
+         */
         function invItem($item) {
             var $input = $item.find('.' + options.bit_class);
             $input.text($input.text() == '0' ? '1' : '0');
         }
 
+        /**
+         * Конструктор представления кода
+         * @constructs
+         * @param {number} length длина кодовой комбинации
+         * @param {number} repeat количество повторений
+         */
         function initCode(length, repeat) {
             _length = typeof length !== "undefined" ? length : options.length;
             _repeat = typeof repeat !== "undefined" ? repeat : options.repeat;
@@ -174,6 +230,10 @@
             _$set = $view.find(options.item);
         }
 
+        /**
+         * Установить код
+         * @param {string} code кодовая комбинация
+         */
         function setCode(code) {
             for (var i=0, j; i!=_repeat; i++) {
                 for (j=0; j!=_length; j++) {
@@ -182,19 +242,41 @@
             }
         }
 
+        // инициализация
         initCode();
 
+        // Вернуть публичные методы
         return {
             fn: {
+                /**
+                 * Функция инициализации
+                 * вызов конструктора с параметрами
+                 * @param {number} length длина кодовой комбинации
+                 * @param {number} repeat количество повторений
+                 */
                 init: function(length, repeat) {
                     initCode(length, repeat);
                 },
+                /**
+                 * Установить код
+                 * делегирование на приватный метод
+                 * @param {string} code кодовая комбинация
+                 */
                 set: function(code) {
                     setCode(code);
                 },
+                /**
+                 * Очистить код представления
+                 * все юниты сбрасываются в ноль
+                 */
                 clear: function() {
                     setCode(new Array(options.length +1).join('0'));
                 },
+                /**
+                 * Выбрать указанные юниты
+                 * если аргумент не задан, то сбросить выделение
+                 * @param {number|array|undefined} nums требуемые юниты
+                 */
                 select: function(nums) {
                     _$set.each(function() {
                         var $item = $(this);
@@ -219,28 +301,52 @@
 
     /**
      * Класс модели кода
-     * @constructs
-     * @param  {object} options настройки
-     * @return {object} публичные методы
+     * @class
+     * @param   {object} options настройки
+     * @returns {object} публичные методы
      */
     var RepeatCode = function(options) {
-
+        // настройки
         options = $.extend(true, {
+            /** @type {jQuery} объект представления кода */
             $codeview: $("#codeview"),
+            /** @type {jQuery} объект представления коллекции */
             $options: $("#options"),
+            /** @type {number} максимальное число отображаемых элементов коллекции */
             maxview: 200,
+            /** @type {string} единицчный элемент представления коллекции */
             item: 'tr',
+            /**
+             * Функция вычисления количества всех возможных вариантов
+             * @param   {object} a атрибуты
+             * @returns {number} количество
+             */
             calcAll: function(a) {
                 return getSample(a.error, a.length * a.repeat);
             },
+            /**
+             * Функция вычисления корректных вариантов
+             * @param   {object} a атрибуты
+             * @returns {number} количество
+             */
             calcCorrect: function(a) {
                 return getSample(a.error, a.length) * Math.pow(a.repeat, a.error);
             },
+            /**
+             * Функция отображения результатов вычисления
+             * @param {object} result результаты
+             */
             showResult: function(result) {
                 $statistic = $("#statistic");
                 $statistic.find("span[name='all']").text(result.all);
                 $statistic.find("span[name='success']").text(result.success + ' [~' + (100 * result.success / result.all).toFixed(2) + '%]');
             },
+            /**
+             * Функция формирования представления элемента коллекции
+             * @param   {object} option элемент коллекции
+             * @param   {number} index индекс элемента
+             * @returns {string} html-текст элемента
+             */
             optView: function(option, index) {
                 return "<tr class='" + (option.correct ? "correct" : "") + "'><td>"
                     + index + ".</td><td>[" + option.nums.map(function(n){
@@ -249,14 +355,24 @@
             }
         }, options);
 
+        /** @access private */
         var _collection = [],
             _block = null,
             _attrs = null,
             _result = null,
             _$options = [];
 
+        /**
+         * @access private
+         * @type {RepeatCodeView} представление
+         */
         var _codeview = RepeatCodeView(options.$codeview);
 
+        /**
+         * Функция расчетов
+         * @param   {object} attrs атрибуты
+         * @returns {object} результаты
+         */
         function repcodeResult(attrs) {
             return {
                 all: options.calcAll(attrs),
@@ -264,11 +380,22 @@
             }
         }
 
+        /**
+         * Функция очистки коллекции
+         * необходимо вызывать перед конструктором
+         */
         function repcodeClear() {
             _collection.length = 0;
             _codeview.fn.init();
+            options.$options.empty();
         }
 
+        /**
+         * Конструктор модели
+         * @constructs
+         * @param {string} block кодовая комбинация
+         * @param {object} attrs атрибуты
+         */
         function repcodeCreate(block, attrs) {
             _block = block;
             _attrs = attrs;
@@ -276,18 +403,19 @@
             _codeview.fn.set(_block);
             _result = repcodeResult(_attrs);
             _collection = RepeatCodeCollection(_attrs);
-
+            // формирование представления коллекции
             for (var i = 0, opts = "", max = options.maxview && options.maxview < _collection.length ? options.maxview : _collection.length; i != max; i++) {
                 opts += options.optView(_collection[i], i+1);
             }
-            options.$options.empty().append(opts);
+            options.$options.append(opts);
             _$options = options.$options.find(options.item);
-
+            // вывод результатов
             if (typeof options.showResult === "function") {
                 options.showResult(_result);
             }
         }
 
+        // Обработка наведения курсора на элементы коллекции в представлении
         options.$options.delegate(options.item, 'mouseenter', function(event) {
             var index = _$options.index(this);
             _codeview.fn.select(_collection[index].nums);
@@ -295,12 +423,23 @@
             _codeview.fn.select();
         });
 
+        // Вернуть публичные методы
         return {
             fn: {
+                /**
+                 * Создание модели
+                 * очистка и вызов констуктора
+                 * @param   {string} block кодовая комбинация
+                 * @param   {object} attrs атрибуты создания
+                 */
                 create: function(block, attrs) {
                     repcodeClear();
                     repcodeCreate(block, attrs);
                 },
+                /**
+                 * Очистка модели
+                 * делегирования приватному методу
+                 */
                 clear: function() {
                     repcodeClear();
                 }
@@ -310,9 +449,9 @@
 
     /**
      * Получить значение поля формы
-     * @param  {jQuery} $form целевая форма
-     * @param  {string} name  имя поля
-     * @return {number|string|null} значение поля
+     * @param   {jQuery} $form целевая форма
+     * @param   {string} name  имя поля
+     * @returns {number|string|null} значение поля
      */
     function findFormValue($form, name) {
         var $tr = $form.find('tr[name=' + name + ']'),
@@ -325,6 +464,7 @@
     // После полной загрузки приложения ========================================
     $(window).load(function(){
 
+        /** @type {RepeatCode} инициализация */
         var _repcode = RepeatCode();
 
         // Валидация поля и формы при редактировании значения
@@ -354,7 +494,6 @@
 
         // валидация формы
         $("#form_params .tf_value").change();
-        RepeatCodeView($("#codeview"));
 
         // Действие при сабмите
         $("#but_submit").click(function(event){
@@ -365,7 +504,6 @@
                 error: findFormValue($params, 'error')
             });
         });
-
     });
 
 })();
