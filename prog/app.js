@@ -65,17 +65,20 @@
      * @returns {number} количество сочетаний
      */
     function getSample(k, n) {
-        return n >= k ? getFactorial(n) / (getFactorial(k) * getFactorial(n -k)) : 0;
+        for (var res = 1, i = 0; i != k; i++) {
+            res *= (n - i)/(k - i);
+        } return res;
     }
 
     /**
      * Получить все варинты сочетания без повторений
      * @param   {number} k числитель
      * @param   {number} n знаменатель
+     * @param   {number} max максимальное количество
      * @returns {Array} массив вариантов в целых числах
      */
-    function getComb(k, n) {
-        for (var comb = [], cur = (1 << k) -1, tmp; cur < (1 << n); ) {
+    function getComb(k, n, max) {
+        for (var comb = [], i = 0, cur = (1 << k) -1, tmp; cur < (1 << n) && (!max || i < max); i++) {
             comb.push(cur);
             tmp = (cur | (cur -1)) +1;
             cur = tmp | ((((tmp & -tmp) / (cur & -cur)) >> 1) -1);
@@ -147,11 +150,12 @@
         /**
          * Функция формирования коллекции
          * @param   {object} attrs атрибуты
+         * @param   {number} max максимальное число
          * @returns {Array} массив элементов коллекции
          */
-        return function(attrs) {
+        return function(attrs, max) {
             var codelen = attrs.length * attrs.repeat,
-                comb = getComb(attrs.error, codelen);
+                comb = getComb(attrs.error, codelen, max);
             var collection = [];
             for (var bin, i = comb.length -1; i > -1; i--) {
                 bin = comb[i].toString(2);
@@ -330,7 +334,10 @@
              * @returns {number} количество
              */
             calcCorrect: function(a) {
-                return getSample(a.error, a.length) * Math.pow(a.repeat, a.error);
+                for (var sum = i = 0, max = Math.floor((a.repeat -1)/2); i != max; i++) {
+                    sum += getSample(i +1, a.repeat);
+                }
+                return getSample(a.error, a.length) * Math.pow(sum, a.error);
             },
             /**
              * Функция отображения результатов вычисления
@@ -402,9 +409,9 @@
             _codeview.fn.init(_attrs.length, _attrs.repeat);
             _codeview.fn.set(_block);
             _result = repcodeResult(_attrs);
-            _collection = RepeatCodeCollection(_attrs);
+            _collection = RepeatCodeCollection(_attrs, options.maxview);
             // формирование представления коллекции
-            for (var i = 0, opts = "", max = options.maxview && options.maxview < _collection.length ? options.maxview : _collection.length; i != max; i++) {
+            for (var i = 0, opts = "", max = _collection.length; i != max; i++) {
                 opts += options.optView(_collection[i], i+1);
             }
             options.$options.append(opts);
